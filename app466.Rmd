@@ -1,0 +1,346 @@
+---
+title: "466 ass1"
+output: html_document
+---
+
+```{r}
+# Load libraries
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(pracma)
+```
+
+```{r}
+# Read data
+data <- read.csv("/Users/peishannnn/Desktop/apm466 ass1/apm466 ass1 data.csv")
+```
+
+```{r}
+# Convert Maturity Date to Date format
+data$'Maturity_Date' <- as.Date(data$'Maturity_Date', format="%m/%d/%Y")
+
+current_date <- as.Date("2025-03-01")
+```
+
+```{r}
+# Calculate Years to Maturity
+data <- data %>% mutate(Years_to_Maturity = as.numeric
+                        (difftime(data$'Maturity_Date', current_date, 
+                                  units="days")) / 365)
+```
+
+```{r}
+# Select bonds with specific maturity dates
+selected_maturities <- as.Date(c("2025-09-01", "2026-03-01", 
+                                 "2026-09-01", "2027-03-01", "2027-09-01", 
+                                 "2028-03-01", "2028-09-01", "2029-03-01", 
+                                 "2029-09-01", "2030-03-01"), format="%Y-%m-%d")
+data_selected <- data %>% filter(data$Maturity_Date %in% selected_maturities)
+data_selected$Years_to_Maturity <- round(data_selected$Years_to_Maturity, 1)
+data_selected <- data_selected %>% arrange(Years_to_Maturity)
+years_to_maturity <- matrix(data_selected$Years_to_Maturity, nrow = 10, ncol = 1)
+```
+
+```{r}
+# Convert Coupon from percentage to decimal
+data_selected$Coupon <- as.numeric(sub("%", "", data_selected$Coupon)) / 100
+coupon_rate <- matrix(c(data_selected$Coupon), nrow = 10, ncol = 1)
+```
+
+```{r}
+# Define bond parameters
+face_value <- 100  # Assume face value of 100
+num_payments_per_year <- 2  # Assuming semi-annual coupon payments
+```
+
+```{r}
+# Function to compute accrued interest
+compute_accrued_interest <- function(coupon_rate, last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year) {
+  time_since_last_coupon <- as.numeric(difftime(current_date, last_coupon_date, units = "days")) /
+                            (365 / num_payments_per_year)
+  accrued_interest <- (coupon_rate / num_payments_per_year) * face_value * time_since_last_coupon
+  return(accrued_interest)
+}
+accrued_interest_6 <- compute_accrued_interest(coupon_rate[1,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_7 <- compute_accrued_interest(coupon_rate[2,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_8 <- compute_accrued_interest(coupon_rate[3,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_9 <- compute_accrued_interest(coupon_rate[4,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_10 <- compute_accrued_interest(coupon_rate[5,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_13 <- compute_accrued_interest(coupon_rate[6,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_14 <- compute_accrued_interest(coupon_rate[7,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_15 <- compute_accrued_interest(coupon_rate[8,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_16 <- compute_accrued_interest(coupon_rate[9,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_17 <- compute_accrued_interest(coupon_rate[10,1], last_coupon_date = as.Date("2024-09-01", format="%Y-%m-%d"), current_date, num_payments_per_year)
+accrued_interest_matrix <- matrix(c(accrued_interest_6, accrued_interest_7, accrued_interest_8, accrued_interest_9, accrued_interest_10, accrued_interest_13, accrued_interest_14, accrued_interest_15, accrued_interest_16, accrued_interest_17), nrow = 10, ncol = 1)
+```
+
+```{r}
+# Define clean price
+clean_price <- matrix(c(data_selected$Close_Price_6, data_selected$Close_Price_7, data_selected$Close_Price_8, data_selected$Close_Price_9, data_selected$Close_Price_10, data_selected$Close_Price_13, data_selected$Close_Price_14, data_selected$Close_Price_15, data_selected$Close_Price_16, data_selected$Close_Price_17), nrow = 10, ncol = 10)
+
+# Define dirty price
+dirty_price_1 <- clean_price[1, ] + accrued_interest_matrix[1,1]
+dirty_price_2 <- clean_price[2, ] + accrued_interest_matrix[2,1]
+dirty_price_3 <- clean_price[3, ] + accrued_interest_matrix[3,1]
+dirty_price_4 <- clean_price[4, ] + accrued_interest_matrix[4,1]
+dirty_price_5 <- clean_price[5, ] + accrued_interest_matrix[5,1]
+dirty_price_6 <- clean_price[6, ] + accrued_interest_matrix[6,1]
+dirty_price_7 <- clean_price[7, ] + accrued_interest_matrix[7,1]
+dirty_price_8 <- clean_price[8, ] + accrued_interest_matrix[8,1]
+dirty_price_9 <- clean_price[9, ] + accrued_interest_matrix[9,1]
+dirty_price_10 <- clean_price[10, ] + accrued_interest_matrix[10,1]
+dirty_price <- matrix(c(dirty_price_1, dirty_price_2, dirty_price_3, dirty_price_4, dirty_price_5, dirty_price_6, dirty_price_7, dirty_price_8, dirty_price_9, dirty_price_10), nrow = 10, ncol = 10, byrow = TRUE)
+colnames(dirty_price) <- c("2025-01-06", "2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10", "2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16", "2025-01-17")
+```
+
+```{r}
+# Function to compute bond price for a given YTM
+bond_price_function <- function(ytm, price, coupon_rate, face_value, years_to_maturity) {
+  semi_yield <- ytm / 2  # Convert annual YTM to semi-annual
+  periods <- years_to_maturity * 2  # Total periods
+  coupon_payment <- (coupon_rate / 2) * face_value  # Semiannual coupon
+
+  # Compute Present Value of Coupons
+  pv_coupons <- sum(coupon_payment / ((1 + semi_yield)^(1:periods)))
+
+  # Compute Present Value of Face Value
+  pv_face <- face_value / ((1 + semi_yield)^periods)
+
+  # Total bond price
+  calculated_price <- pv_coupons + pv_face
+
+  return(calculated_price - price)
+}
+
+# Function to compute YTM
+compute_ytm <- function(price, coupon_rate, face_value, years_to_maturity) {
+  ytm_solution <- tryCatch(
+    uniroot(bond_price_function, interval = c(0, 1), tol = 1e-6, 
+            price = price, coupon_rate = coupon_rate, 
+            face_value = face_value, years_to_maturity = years_to_maturity)$root,
+    error = function(e) NA  # Return NA if no root is found
+  )
+  return(ytm_solution * 2)  # Convert semiannual yield to annual YTM
+}
+
+# Compute YTM for each dirty price
+ytm_values_1 <- sapply(dirty_price[1,], compute_ytm, coupon_rate[1,1], 
+                     face_value, years_to_maturity[1,1])
+ytm_values_2 <- sapply(dirty_price[2,], compute_ytm, coupon_rate[2,1], 
+                     face_value, years_to_maturity[2,1])
+ytm_values_3 <- sapply(dirty_price[3,], compute_ytm, coupon_rate[3,1], 
+                     face_value, years_to_maturity[3,1])
+ytm_values_4 <- sapply(dirty_price[4,], compute_ytm, coupon_rate[4,1], 
+                     face_value, years_to_maturity[4,1])
+ytm_values_5 <- sapply(dirty_price[5,], compute_ytm, coupon_rate[5,1], 
+                     face_value, years_to_maturity[5,1])
+ytm_values_6 <- sapply(dirty_price[6,], compute_ytm, coupon_rate[6,1], 
+                     face_value, years_to_maturity[6,1])
+ytm_values_7 <- sapply(dirty_price[7,], compute_ytm, coupon_rate[7,1], 
+                     face_value, years_to_maturity[7,1])
+ytm_values_8 <- sapply(dirty_price[8,], compute_ytm, coupon_rate[8,1], 
+                     face_value, years_to_maturity[8,1])
+ytm_values_9 <- sapply(dirty_price[9,], compute_ytm, coupon_rate[9,1], 
+                     face_value, years_to_maturity[9,1])
+ytm_values_10 <- sapply(dirty_price[10,], compute_ytm, coupon_rate[10,1], 
+                     face_value, years_to_maturity[10,1])
+ytm_values <- matrix(c(ytm_values_1,ytm_values_2,ytm_values_3,ytm_values_4,ytm_values_5,ytm_values_6,ytm_values_7,ytm_values_8,ytm_values_9,ytm_values_10), nrow = 10, ncol = 10, byrow = TRUE)
+colnames(ytm_values) <- c("2025-01-06", "2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10", "2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16", "2025-01-17")
+rownames(ytm_values) <- c("CA135087K940","CA135087L518","CA135087L930","CA135087M847","CA135087N837","CA135087P576","CA135087Q491","CA135087Q988", "CA135087R895","CA135087S471")
+```
+
+```{r}
+# Convert matrix to data frame
+ytm_df <- as.data.frame(ytm_values)
+ytm_df$Maturity <- data_selected$Years_to_Maturity  
+
+ytm_long <- melt(ytm_df, id.vars = "Maturity", variable.name = "Date", value.name = "Yield")
+
+# Plot yield curves with dots
+ggplot(ytm_long, aes(x = Maturity, y = Yield, color = Date, group = Date)) +
+  geom_line(size = 1) +  # Connect dots with lines
+  geom_point(size = 2) +  # Dots at each maturity level
+  labs(title = "Yield Curve Over Time with Dots",
+       x = "Bond Maturity (Years)",
+       y = "Yield to Maturity (YTM)") +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+```{r}
+# Bootstrapping function for Spot Rate
+compute_spot_rate_matrix <- function(dirty_price, coupon_rate, face_value, years_to_maturity) {
+  num_days <- ncol(dirty_price)  # Number of dates
+  num_bonds <- nrow(dirty_price)  # Number of bonds
+
+  spot_rates_matrix <- matrix(NA, nrow=num_bonds, ncol=num_days)  # Initialize Spot Rate Matrix
+
+  for (day in 1:num_days) {  # Loop over each day's bond market data
+    prices <- dirty_price[, day]
+    coupons <- coupon_rate[, 1] / num_payments_per_year * face_value  # Semi-annual coupons
+    maturities <- years_to_maturity[, 1]
+
+    for (i in 1:num_bonds) {  # Loop over each bond maturity
+      if (i == 1) {
+        # First bond assumed to be zero-coupon → Direct calculation
+        spot_rates_matrix[i, day] <- (face_value / prices[i])^(1/maturities[i]) - 1
+      } else {
+        # Solve for Spot Rate using Bootstrapping
+        equation <- function(S) {
+          sum(coupons[1:(i-1)] / (1 + spot_rates_matrix[1:(i-1), day])^(1:(i-1))) +
+            (coupons[i] + face_value) / (1 + S)^maturities[i] - prices[i]
+        }
+        spot_rates_matrix[i, day] <- uniroot(equation, interval = c(1e-4, 1))$root
+      }
+    }
+  }
+  return(spot_rates_matrix * 100)  # Convert to percentage
+}
+
+# Compute Spot Rates for all days
+spot_rates_matrix <- compute_spot_rate_matrix(dirty_price, coupon_rate, face_value, years_to_maturity)
+
+spot_rates_df <- data.frame(Maturity = years_to_maturity[, 1], spot_rates_matrix)
+colnames(spot_rates_df)[-1] <- colnames(dirty_price)  # Keep original date labels
+
+spot_rates_long <- melt(spot_rates_df, id.vars="Maturity", variable.name="Date", value.name="Spot Rate")
+
+spot_rates_long$Date <- as.Date(gsub("Close Price \\(Jan ", "2025-01-", spot_rates_long$Date), format="%Y-%m-%d")
+
+# Plot Spot Curve for Multiple Days
+ggplot(spot_rates_long, aes(x = Maturity, y = `Spot Rate`, color = as.factor(Date))) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Spot Curves Over Time", x = "Maturity (Years)", y = "Spot Rate (%)", color = "Date") +
+  theme_minimal()
+colnames(spot_rates_matrix) <- c("2025-01-06", "2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10", "2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16", "2025-01-17")
+rownames(spot_rates_matrix) <- c("CA135087K940","CA135087L518","CA135087L930","CA135087M847","CA135087N837","CA135087P576","CA135087Q491","CA135087Q988", "CA135087R895","CA135087S471")
+```
+
+```{r}
+# Function to compute 1-year forward rates for years 2-5
+compute_1yr_forward_curve <- function(spot_rates_matrix, years_to_maturity) {
+  num_days <- ncol(spot_rates_matrix)  # Number of date points
+  num_bonds <- nrow(spot_rates_matrix) # Number of bonds
+  
+  forward_rates_matrix <- matrix(NA, nrow=(num_bonds - 1), ncol=num_days)  # Initialize forward rate matrix
+  
+  for (day in 1:num_days) {  # Loop over each day's data
+    spot_rates <- spot_rates_matrix[, day]  # Extract spot rates for the day
+    
+    S1 <- spot_rates[1] / 100  # Spot rate for 1-year maturity in decimal
+    
+    for (i in 2:num_bonds) {  # Compute forward rates for years 2-5
+      t <- years_to_maturity[i]  # Current maturity
+      S_t <- spot_rates[i] / 100  # Spot rate for maturity t in decimal
+      
+      forward_rate <- forward_rate <- (( (1 + S_t)^t / (1 + S1)^1 )^(1 / (t - 1))) - 1
+      forward_rates_matrix[i-1, day] <- forward_rate * 100  # Convert back to percentage
+    }
+  }
+  
+  return(forward_rates_matrix)
+}
+
+# Compute 1-year forward curve
+forward_rates_matrix <- compute_1yr_forward_curve(spot_rates_matrix, years_to_maturity)
+
+forward_rates_df <- data.frame(Maturity = years_to_maturity[-1], forward_rates_matrix)
+colnames(forward_rates_df)[-1] <- colnames(spot_rates_matrix)  # Keep original date labels
+
+forward_rates_long <- melt(forward_rates_df, id.vars="Maturity", variable.name="Date", value.name="Forward Rate")
+
+forward_rates_long$Date <- as.Date(gsub("Close Price \\(Jan ", "2025-01-", forward_rates_long$Date), format="%Y-%m-%d")
+
+# Plot 1-Year Forward Curves Over Time
+ggplot(forward_rates_long, aes(x = Maturity, y = `Forward Rate`, color = as.factor(Date))) +
+  geom_line() +
+  geom_point() +
+  labs(title = "1-Year Forward Curves Over Time", x = "Maturity (Years)", y = "Forward Rate (%)", color = "Date") +
+  theme_minimal()
+
+forward_rates_matrix <- forward_rates_matrix[c(-1,-2,-4,-6,-8),]
+colnames(forward_rates_matrix) <- c("2025-01-06", "2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10", "2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16", "2025-01-17") 
+rownames(forward_rates_matrix) <- c("CA135087M847","CA135087P576","CA135087Q988","CA135087S471")
+```
+
+```{r}
+ytm_5 <- ytm_values[c(-1,-3,-5,-7,-9),]
+```
+
+
+```{r}
+# Function to compute log-returns
+compute_log_returns <- function(rate_matrix) {
+  log_returns <- log(rate_matrix[, -1] / rate_matrix[, -ncol(rate_matrix)])  # Compute log-returns
+  return(log_returns)
+}
+
+# Compute log-returns for yield
+log_returns_yield <- compute_log_returns(ytm_5)
+
+# Compute log-returns for forward rates
+log_returns_forward <- compute_log_returns(forward_rates_matrix)
+
+log_returns_forward[is.na(log_returns_forward)] <- 0 # Log can not deal with negative value
+
+# Compute covariance matrices
+cov_matrix_yield <- cov(t(log_returns_yield))   # Covariance for yields
+cov_matrix_forward <- cov(t(log_returns_forward))  # Covariance for forward rates
+
+cov_matrix_yield_df <- as.data.frame(cov_matrix_yield)
+cov_matrix_forward_df <- as.data.frame(cov_matrix_forward)
+
+print("Covariance Matrix for Yields:")
+print(cov_matrix_yield_df)
+
+print("Covariance Matrix for Forward Rates:")
+print(cov_matrix_forward_df)
+```
+
+```{r}
+# Compute Eigenvalues and Eigenvectors for Yield Covariance Matrix
+eigen_yield <- eigen(cov_matrix_yield)
+eigen_forward <- eigen(cov_matrix_forward)
+
+eigenvalues_yield <- eigen_yield$values
+eigenvectors_yield <- eigen_yield$vectors
+
+eigenvalues_forward <- eigen_forward$values
+eigenvectors_forward <- eigen_forward$vectors
+
+print("Eigenvalues for Yield Covariance Matrix:")
+print(eigenvalues_yield)
+
+print("Eigenvectors for Yield Covariance Matrix:")
+print(eigenvectors_yield)
+
+print("Eigenvalues for Forward Rate Covariance Matrix:")
+print(eigenvalues_forward)
+
+print("Eigenvectors for Forward Rate Covariance Matrix:")
+print(eigenvectors_forward)
+
+# Explanation of First Eigenvalue and Eigenvector
+largest_eigenvalue_yield <- eigenvalues_yield[1]
+largest_eigenvector_yield <- eigenvectors_yield[,1]
+
+largest_eigenvalue_forward <- eigenvalues_forward[1]
+largest_eigenvector_forward <- eigenvectors_forward[,1]
+
+cat("The largest eigenvalue for the yield covariance matrix is:", largest_eigenvalue_yield, "\n")
+cat("The corresponding eigenvector is:\n")
+print(largest_eigenvector_yield)
+
+cat("The largest eigenvalue for the forward rate covariance matrix is:", largest_eigenvalue_forward, "\n")
+cat("The corresponding eigenvector is:\n")
+print(largest_eigenvector_forward)
+
+# Interpretation:
+cat("Interpretation:\n")
+cat("The first eigenvalue represents the direction with the highest variance in the data. 
+     The associated eigenvector indicates the principal component that captures the most variance.")
+```
+
